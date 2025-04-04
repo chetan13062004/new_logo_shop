@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,6 @@ import {
 import useCartStore from '@/hooks/use-cart-store'
 import { useToast } from '@/hooks/use-toast'
 import { OrderItem } from '@/types'
-// import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -28,10 +26,8 @@ export default function AddToCart({
 
   const { addItem } = useCartStore()
 
-  //PROMPT: add quantity state
   const [quantity, setQuantity] = useState(1)
 
-//   const t = useTranslations()
 
   return minimal ? (
     <Button
@@ -47,20 +43,18 @@ export default function AddToCart({
                   router.push('/cart')
                 }}
               >
-                {/* {t('Product.Go to Cart')} */}
                 Go to Cart
               </Button>
             ),
           })
-        } catch (error: any) {
+        } catch (error: Error | unknown) {
           toast({
             variant: 'destructive',
-            description: error.message,
+            description: error instanceof Error ? error.message : 'An error occurred',
           })
         }
       }}
     >
-      {/* {t('Product.Add to Cart')} */}
       Add to Cart
     </Button>
   ) : (
@@ -71,8 +65,7 @@ export default function AddToCart({
       >
         <SelectTrigger className=''>
           <SelectValue>
-            {/* {t('Product.Quantity')}: {quantity} */}
-            Quantity': {quantity}
+            Quantity: {quantity}
           </SelectValue>
         </SelectTrigger>
         <SelectContent position='popper'>
@@ -91,15 +84,14 @@ export default function AddToCart({
           try {
             const itemId = await addItem(item, quantity)
             router.push(`/cart/${itemId}`)
-          } catch (error: any) {
+          } catch (error: Error | unknown) {
             toast({
               variant: 'destructive',
-              description: error.message,
+              description: error instanceof Error ? error.message : 'An error occurred',
             })
           }
         }}
       >
-        {/* {t('Product.Add to Cart')} */}
         Add to Cart
       </Button>
       <Button
@@ -108,16 +100,15 @@ export default function AddToCart({
           try {
             addItem(item, quantity)
             router.push(`/checkout`)
-          } catch (error: any) {
+          } catch (error: Error | unknown) {
             toast({
               variant: 'destructive',
-              description: error.message,
+              description: error instanceof Error ? error.message : 'An error occurred',
             })
           }
         }}
         className='w-full rounded-full '
       >
-        {/* {t('Product.Buy Now')} */}
         Buy Now
       </Button>
     </div>

@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, model, Schema } from 'mongoose';
+import mongoose, { Document,model, Schema } from 'mongoose';
 
 import { IProductInput } from '@/types'
 

@@ -1,6 +1,6 @@
 
 import { IUserInput } from '@/types'
-import mongoose, { Document, Model, model, Schema } from 'mongoose';
+import mongoose, { Document,model, Schema } from 'mongoose';
 
 export interface IUser extends Document, IUserInput {
   _id: string
