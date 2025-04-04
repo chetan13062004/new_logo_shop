@@ -38,7 +38,6 @@ const prices = [
 
 // Define the correct interface for Next.js 15 page props
 interface SearchPageProps {
-  params: Record<string, never>
   searchParams: {
     q?: string
     category?: string
@@ -82,9 +81,7 @@ export async function generateMetadata({
 
 export default async function SearchPage({
   searchParams,
-}: {
-  searchParams: SearchPageProps['searchParams']
-}) {
+}: SearchPageProps) {
   const q = searchParams.q || 'all'
   const category = searchParams.category || 'all'
   const tag = searchParams.tag || 'all'
