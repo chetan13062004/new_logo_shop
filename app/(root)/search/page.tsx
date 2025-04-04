@@ -1,5 +1,4 @@
 import Link from 'next/link'
-
 import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,6 @@ import { IProduct } from '@/lib/db/models/product.model'
 import ProductSortSelector from '@/components/shared/product/product-sort-selector'
 import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
-
 import CollapsibleOnMobile from '@/components/shared/collapsible-on-mobile'
 
 const sortOrders = [
@@ -53,13 +51,11 @@ export async function generateMetadata({
 }: {
   searchParams: SearchParams
 }) {
-  const {
-    q = 'all',
-    category = 'all',
-    tag = 'all',
-    price = 'all',
-    rating = 'all',
-  } = searchParams
+  const q = searchParams.q || 'all'
+  const category = searchParams.category || 'all'
+  const tag = searchParams.tag || 'all'
+  const price = searchParams.price || 'all'
+  const rating = searchParams.rating || 'all'
 
   if (
     (q !== 'all' && q !== '') ||
@@ -82,44 +78,35 @@ export async function generateMetadata({
   }
 }
 
-export default function SearchPage({
+export default async function SearchPage({
   searchParams,
 }: {
   searchParams: SearchParams
 }) {
-  const {
-    q = 'all',
-    category = 'all',
-    tag = 'all',
-    price = 'all',
-    rating = 'all',
-    sort = 'best-selling',
-    page = '1',
-  } = searchParams
+  const q = searchParams.q || 'all'
+  const category = searchParams.category || 'all'
+  const tag = searchParams.tag || 'all'
+  const price = searchParams.price || 'all'
+  const rating = searchParams.rating || 'all'
+  const sort = searchParams.sort || 'best-selling'
+  const page = searchParams.page || '1'
 
   const params = { q, category, tag, price, rating, sort, page }
 
-  // Use Promise.all to fetch data in parallel
-  const fetchData = async () => {
-    const [categories, tags, data] = await Promise.all([
-      getAllCategories(),
-      getAllTags(),
-      getAllProducts({
-        category,
-        tag,
-        query: q,
-        price,
-        rating,
-        page: Number(page),
-        sort,
-      })
-    ]);
-    
-    return { categories, tags, data };
-  };
-
-  // Use the client component to handle the async data
-  const { categories, tags, data } = fetchData();
+  // Fetch data using Promise.all for parallel requests
+  const [categories, tags, data] = await Promise.all([
+    getAllCategories(),
+    getAllTags(),
+    getAllProducts({
+      category,
+      tag,
+      query: q,
+      price,
+      rating,
+      page: Number(page),
+      sort,
+    })
+  ]);
 
   return (
     <div className='px-4 py-6 md:px-6 lg:px-12'>
