@@ -1305,14 +1305,14 @@ headerMenus: [
           isPublished: true,
         },
         {
-          title: 'Best Sellers in T-Shirts',
+          title: '',
           buttonCaption: 'Shop Now',
           image: '/images/banner1.jpg',
           url: '/search?category=T-Shirts',
           isPublished: true,
         },
         {
-          title: 'Best Deals on Wrist Watches',
+          title: '',
           buttonCaption: 'See More',
           image: '/images/banner2.jpg',
           url: '/search?category=Wrist Watches',

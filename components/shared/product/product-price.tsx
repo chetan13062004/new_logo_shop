@@ -1,4 +1,3 @@
-'use client'
 import { cn } from '@/lib/utils'
 
 const ProductPrice = ({
@@ -20,13 +19,13 @@ const ProductPrice = ({
   const stringValue = price.toString()
   const [intValue, floatValue] = stringValue.includes('.')
     ? stringValue.split('.')
-    : [stringValue, '']
+    : [stringValue, '00']
 
   // Plain view
   if (plain) {
     return (
       <div className={cn('text-3xl', className)}>
-        {intValue}
+        Rs {parseFloat(intValue).toLocaleString('en-IN')}
         <span className='text-xs align-super'>{floatValue}</span>
       </div>
     )
@@ -36,7 +35,7 @@ const ProductPrice = ({
   if (listPrice === 0) {
     return (
       <div className={cn('text-3xl', className)}>
-        {intValue}
+      Rs {parseFloat(intValue).toLocaleString('en-IN')}
         <span className='text-xs align-super'>{floatValue}</span>
       </div>
     )
@@ -56,11 +55,11 @@ const ProductPrice = ({
         </div>
         <div className={`flex ${forListing && 'justify-center'} items-center gap-2`}>
           <div className={cn('text-3xl', className)}>
-            {intValue}
+            Rs {parseFloat(intValue).toLocaleString('en-IN')}
             <span className='text-xs align-super'>{floatValue}</span>
           </div>
           <div className='text-muted-foreground text-xs py-2'>
-            Was: <span className='line-through'>{listPrice}</span>
+            Was: <span className='line-through'>Rs{parseFloat(listPrice.toString()).toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>
@@ -73,12 +72,9 @@ const ProductPrice = ({
       <div className='flex justify-center gap-3'>
         <div className='text-3xl text-orange-700'>-{discountPercent}%</div>
         <div className={cn('text-3xl', className)}>
-          {intValue}
+          Rs {parseFloat(intValue).toLocaleString('en-IN')}
           <span className='text-xs align-super'>{floatValue}</span>
         </div>
-      </div>
-      <div className='text-muted-foreground text-xs py-2'>
-        List price: <span className='line-through'>{listPrice}</span>
       </div>
     </div>
   )

@@ -43,8 +43,7 @@ export default function CartPage() {
               Your Shopping Cart is empty
             </CardHeader>
             <CardContent>
-              Continue shopping on', <Link href='/'>{APP_NAME}</Link>,
-              
+              Continue shopping on <Link href='/'>{APP_NAME}</Link>
             </CardContent>
           </Card>
         ) : (
@@ -58,7 +57,7 @@ export default function CartPage() {
                 <CardContent className='p-4'>
                   <div className='flex justify-end border-b mb-4'>
                     {/* {t('Cart.Price')} */}
-                    Cart Price
+                    Price
                   </div>
 
                   {items.map((item) => (
@@ -159,7 +158,7 @@ export default function CartPage() {
                   ))}
 
                   <div className='flex justify-end text-lg my-2'>
-                    Subtotal
+                    Subtotal{' '}
                     {items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
                     Items:{' '}
                     <span className='font-bold ml-1'>
@@ -175,16 +174,14 @@ export default function CartPage() {
                   {itemsPrice < FREE_SHIPPING_MIN_PRICE ? (
                     <div className='flex-1'>
                       {/* {t('Cart.Add')}{' '} */}
-                      Add
+                      Add{' '}
                       <span className='text-green-700'>
                         <ProductPrice
                           price={FREE_SHIPPING_MIN_PRICE - itemsPrice}
                           plain
                         />
                       </span>{' '}
-                      
-                        of eligible items to your order to qualify for FREE Shipping
-                      
+                      of eligible items to your order to qualify for FREE Shipping
                     </div>
                   ) : (
                     <div className='flex-1'>
@@ -198,7 +195,7 @@ export default function CartPage() {
                     Subtotal (
                     {items.reduce((acc, item) => acc + item.quantity, 0)}{' '}
                     {/* {t('Cart.items')}):{' '} */}
-                    Items):{" "}
+                    Items):{' '}
                     <span className='font-bold'>
                       <ProductPrice price={itemsPrice} plain />
                     </span>{' '}
@@ -207,7 +204,7 @@ export default function CartPage() {
                     onClick={() => router.push('/checkout')}
                     className='rounded-full w-full'
                   >
-                    Proceed to Checkout'
+                    Proceed to Checkout
                   </Button>
                 </CardContent>
               </Card>
