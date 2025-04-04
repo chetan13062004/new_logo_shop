@@ -38,18 +38,20 @@ const prices = [
   },
 ]
 
+type SearchParams = {
+  q?: string
+  category?: string
+  tag?: string
+  price?: string
+  rating?: string
+  sort?: string
+  page?: string
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: {
-    q?: string
-    category?: string
-    tag?: string
-    price?: string
-    rating?: string
-    sort?: string
-    page?: string
-  }
+  searchParams: SearchParams
 }) {
   const {
     q = 'all',
@@ -80,18 +82,10 @@ export async function generateMetadata({
   }
 }
 
-export default async function SearchPage({
+export default function SearchPage({
   searchParams,
 }: {
-  searchParams: {
-    q?: string
-    category?: string
-    tag?: string
-    price?: string
-    rating?: string
-    sort?: string
-    page?: string
-  }
+  searchParams: SearchParams
 }) {
   const {
     q = 'all',
@@ -105,17 +99,27 @@ export default async function SearchPage({
 
   const params = { q, category, tag, price, rating, sort, page }
 
-  const categories = await getAllCategories()
-  const tags = await getAllTags()
-  const data = await getAllProducts({
-    category,
-    tag,
-    query: q,
-    price,
-    rating,
-    page: Number(page),
-    sort,
-  })
+  // Use Promise.all to fetch data in parallel
+  const fetchData = async () => {
+    const [categories, tags, data] = await Promise.all([
+      getAllCategories(),
+      getAllTags(),
+      getAllProducts({
+        category,
+        tag,
+        query: q,
+        price,
+        rating,
+        page: Number(page),
+        sort,
+      })
+    ]);
+    
+    return { categories, tags, data };
+  };
+
+  // Use the client component to handle the async data
+  const { categories, tags, data } = fetchData();
 
   return (
     <div className='px-4 py-6 md:px-6 lg:px-12'>
