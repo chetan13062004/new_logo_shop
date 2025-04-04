@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from 'next/font/google'
-import '@/app/globals.css'  // Changed from '../globals.css' to absolute path
+import '../../globals.css'  // Fixed path to globals.css
 import ClientProviders from '@/components/shared/client-providers'
 import { APP_DESCRIPTION, APP_NAME, APP_SLOGAN } from '@/lib/constants'
 
