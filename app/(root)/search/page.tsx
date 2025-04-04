@@ -36,21 +36,23 @@ const prices = [
   },
 ]
 
-type SearchParams = {
-  q?: string
-  category?: string
-  tag?: string
-  price?: string
-  rating?: string
-  sort?: string
-  page?: string
+// Define the correct interface for Next.js 15 page props
+interface SearchPageProps {
+  params: {}
+  searchParams: {
+    q?: string
+    category?: string
+    tag?: string
+    price?: string
+    rating?: string
+    sort?: string
+    page?: string
+  }
 }
 
 export async function generateMetadata({
   searchParams,
-}: {
-  searchParams: SearchParams
-}) {
+}: SearchPageProps) {
   const q = searchParams.q || 'all'
   const category = searchParams.category || 'all'
   const tag = searchParams.tag || 'all'
@@ -79,10 +81,9 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage({
+  params,
   searchParams,
-}: {
-  searchParams: SearchParams
-}) {
+}: SearchPageProps) {
   const q = searchParams.q || 'all'
   const category = searchParams.category || 'all'
   const tag = searchParams.tag || 'all'
@@ -91,7 +92,7 @@ export default async function SearchPage({
   const sort = searchParams.sort || 'best-selling'
   const page = searchParams.page || '1'
 
-  const params = { q, category, tag, price, rating, sort, page }
+  const filterParams = { q, category, tag, price, rating, sort, page }
 
   // Fetch data using Promise.all for parallel requests
   const [categories, tags, data] = await Promise.all([
@@ -142,7 +143,7 @@ export default async function SearchPage({
         <ProductSortSelector
           sortOrders={sortOrders}
           sort={sort}
-          params={params}
+          params={filterParams}
         />
       </div>
 
@@ -155,7 +156,7 @@ export default async function SearchPage({
                 <li>
                   <Link
                     className={`${('all' === category || '' === category) && 'text-primary font-semibold'}`}
-                    href={getFilterUrl({ category: 'all', params })}
+                    href={getFilterUrl({ category: 'all', params: filterParams })}
                   >
                     All
                   </Link>
@@ -164,7 +165,7 @@ export default async function SearchPage({
                   <li key={c}>
                     <Link
                       className={`${c === category && 'text-primary font-semibold'}`}
-                      href={getFilterUrl({ category: c, params })}
+                      href={getFilterUrl({ category: c, params: filterParams })}
                     >
                       {c}
                     </Link>
@@ -179,7 +180,7 @@ export default async function SearchPage({
                 <li>
                   <Link
                     className={`${'all' === price && 'text-primary font-semibold'}`}
-                    href={getFilterUrl({ price: 'all', params })}
+                    href={getFilterUrl({ price: 'all', params: filterParams })}
                   >
                     All
                   </Link>
@@ -187,7 +188,7 @@ export default async function SearchPage({
                 {prices.map((p) => (
                   <li key={p.value}>
                     <Link
-                      href={getFilterUrl({ price: p.value, params })}
+                      href={getFilterUrl({ price: p.value, params: filterParams })}
                       className={`${p.value === price && 'text-primary font-semibold'}`}
                     >
                       {p.name}
@@ -202,7 +203,7 @@ export default async function SearchPage({
               <ul className='space-y-1'>
                 <li>
                   <Link
-                    href={getFilterUrl({ rating: 'all', params })}
+                    href={getFilterUrl({ rating: 'all', params: filterParams })}
                     className={`${'all' === rating && 'text-primary font-semibold'}`}
                   >
                     All
@@ -210,7 +211,7 @@ export default async function SearchPage({
                 </li>
                 <li>
                   <Link
-                    href={getFilterUrl({ rating: '4', params })}
+                    href={getFilterUrl({ rating: '4', params: filterParams })}
                     className={`${'4' === rating && 'text-primary font-semibold'}`}
                   >
                     <div className='flex items-center gap-1'>
@@ -228,7 +229,7 @@ export default async function SearchPage({
                 <li>
                   <Link
                     className={`${('all' === tag || '' === tag) && 'text-primary font-semibold'}`}
-                    href={getFilterUrl({ tag: 'all', params })}
+                    href={getFilterUrl({ tag: 'all', params: filterParams })}
                   >
                     All
                   </Link>
@@ -237,7 +238,7 @@ export default async function SearchPage({
                   <li key={t}>
                     <Link
                       className={`${toSlug(t) === tag && 'text-primary font-semibold'}`}
-                      href={getFilterUrl({ tag: t, params })}
+                      href={getFilterUrl({ tag: t, params: filterParams })}
                     >
                       {t}
                     </Link>
