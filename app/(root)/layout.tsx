@@ -1,11 +1,6 @@
-
 import { Geist, Geist_Mono } from 'next/font/google'
-import '../globals.css'
+import '@/app/globals.css'  // Changed from '../globals.css' to absolute path
 import ClientProviders from '@/components/shared/client-providers'
-
-import { notFound } from 'next/navigation'
-
-import { cookies } from 'next/headers'
 import { APP_DESCRIPTION, APP_NAME, APP_SLOGAN } from '@/lib/constants'
 
 const geistSans = Geist({
@@ -19,25 +14,20 @@ const geistMono = Geist_Mono({
 })
 
 export async function generateMetadata() {
-
   return {
     title: {
       template: `%s | ${APP_NAME}`,
       default: `${APP_NAME}. ${APP_SLOGAN}`,
     },
     description: APP_DESCRIPTION,
- 
   }
 }
 
 export default async function AppLayout({
-  params,
   children,
 }: {
-  params: { locale: string }
   children: React.ReactNode
 }) {
- 
   return (
     <html
       lang='en'
@@ -46,10 +36,9 @@ export default async function AppLayout({
       <body
         className={`min-h-screen ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-          <ClientProviders >
-            {children}
-          </ClientProviders>
-
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   )
