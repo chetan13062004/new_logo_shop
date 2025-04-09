@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-// import { createOrder } from '@/lib/actions/order.actions'
 import {
   calculateFutureDate,
   formatDateTime,
@@ -37,12 +36,14 @@ import { ShippingAddress } from '@/types'
 import useIsMounted from '@/hooks/use-is-mounted'
 import Link from 'next/link'
 import useCartStore from '@/hooks/use-cart-store'
-// import useSettingStore from '@/hooks/use-setting-store'
-import ProductPrice from '@/components/shared/product/product-price'
-
-
 import { APP_NAME, AVAILABLE_DELIVERY_DATES, AVAILABLE_PAYMENT_METHOD, DEFAULT_PAYMENT_METHOD } from '@/lib/constants'
 import { createOrder } from '@/lib/actions/order.actions'
+
+// Utility function for price formatting
+const formatPrice = (price?: number) => {
+  if (price === undefined) return '--';
+  return `Rs. ${price.toFixed(2)}`;
+};
 
 const shippingAddressDefaultValues =
   process.env.NODE_ENV === 'development'
@@ -68,14 +69,7 @@ const shippingAddressDefaultValues =
 const CheckoutForm = () => {
   const { toast } = useToast()
   const router = useRouter()
-//   const {
-//     setting: {
-//       site,
-//       availablePaymentMethods,
-//       defaultPaymentMethod,
-//       availableDeliveryDates,
-//     },
-//   } = useSettingStore()
+  const isMounted = useIsMounted()
 
   const {
     cart: {
@@ -95,7 +89,6 @@ const CheckoutForm = () => {
     clearCart,
     setDeliveryDateIndex,
   } = useCartStore()
-  const isMounted = useIsMounted()
 
   const shippingAddressForm = useForm<ShippingAddress>({
     resolver: zodResolver(ShippingAddressSchema),
@@ -105,6 +98,21 @@ const CheckoutForm = () => {
     setShippingAddress(values)
     setIsAddressSelected(true)
   }
+
+  // Initialize state based on false values first
+  const [isAddressSelected, setIsAddressSelected] = useState<boolean>(false)
+  const [isPaymentMethodSelected, setIsPaymentMethodSelected] = useState<boolean>(false)
+  const [isDeliveryDateSelected, setIsDeliveryDateSelected] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Add this useEffect to synchronize state with cart store data
+  useEffect(() => {
+    if (isMounted) {
+      setIsAddressSelected(!!shippingAddress)
+      setIsPaymentMethodSelected(!!paymentMethod)
+      setIsDeliveryDateSelected(deliveryDateIndex !== undefined)
+    }
+  }, [isMounted, shippingAddress, paymentMethod, deliveryDateIndex])
 
   useEffect(() => {
     if (!isMounted || !shippingAddress) return
@@ -117,47 +125,54 @@ const CheckoutForm = () => {
     shippingAddressForm.setValue('phone', shippingAddress.phone)
   }, [items, isMounted, router, shippingAddress, shippingAddressForm])
 
-  const [isAddressSelected, setIsAddressSelected] = useState<boolean>(false)
-  const [isPaymentMethodSelected, setIsPaymentMethodSelected] =
-    useState<boolean>(false)
-  const [isDeliveryDateSelected, setIsDeliveryDateSelected] =
-    useState<boolean>(false)
-
   const handlePlaceOrder = async () => {
-    const res = await createOrder({
-      items,
-      shippingAddress,
-      expectedDeliveryDate: calculateFutureDate(
-        AVAILABLE_DELIVERY_DATES[deliveryDateIndex!].daysToDeliver
-      ),
-      deliveryDateIndex,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-    })
-    if (!res.success) {
+    setIsSubmitting(true)
+    try {
+      const res = await createOrder({
+        items,
+        shippingAddress,
+        expectedDeliveryDate: calculateFutureDate(
+          AVAILABLE_DELIVERY_DATES[deliveryDateIndex!].daysToDeliver
+        ),
+        deliveryDateIndex,
+        paymentMethod,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        totalPrice,
+      })
+      if (!res.success) {
+        toast({
+          description: res.message,
+          variant: 'destructive',
+        })
+      } else {
+        toast({
+          description: res.message,
+          variant: 'default',
+        })
+        clearCart()
+        router.push(`/checkout/${res.data?.orderId}`)
+      }
+    } catch (error) {
       toast({
-        description: res.message,
+        description: 'An error occurred while placing your order.',
         variant: 'destructive',
       })
-    } else {
-      toast({
-        description: res.message,
-        variant: 'default',
-      })
-      clearCart()
-      router.push(`/checkout/${res.data?.orderId}`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
+  
   const handleSelectPaymentMethod = () => {
     setIsAddressSelected(true)
     setIsPaymentMethodSelected(true)
   }
+  
   const handleSelectShippingAddress = () => {
     shippingAddressForm.handleSubmit(onSubmitShippingAddress)()
   }
+  
   const CheckoutSummary = () => (
     <Card>
       <CardContent className='p-4'>
@@ -166,6 +181,7 @@ const CheckoutForm = () => {
             <Button
               className='rounded-full w-full'
               onClick={handleSelectShippingAddress}
+              disabled={!shippingAddressForm.formState.isValid}
             >
               Ship to this address
             </Button>
@@ -193,8 +209,12 @@ const CheckoutForm = () => {
         )}
         {isPaymentMethodSelected && isAddressSelected && (
           <div>
-            <Button onClick={handlePlaceOrder} className='rounded-full w-full'>
-              Place Your Order
+            <Button 
+              onClick={handlePlaceOrder} 
+              className='rounded-full w-full'
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Processing...' : 'Place Your Order'}
             </Button>
             <p className='text-xs text-center py-2'>
               By placing your order, you agree to {APP_NAME}&apos;s{' '}
@@ -210,7 +230,7 @@ const CheckoutForm = () => {
             <div className='flex justify-between'>
               <span>Items:</span>
               <span>
-                <ProductPrice price={itemsPrice} plain />
+                {formatPrice(itemsPrice)}
               </span>
             </div>
             <div className='flex justify-between'>
@@ -221,7 +241,7 @@ const CheckoutForm = () => {
                 ) : shippingPrice === 0 ? (
                   'FREE'
                 ) : (
-                  <ProductPrice price={shippingPrice} plain />
+                  formatPrice(shippingPrice)
                 )}
               </span>
             </div>
@@ -231,14 +251,14 @@ const CheckoutForm = () => {
                 {taxPrice === undefined ? (
                   '--'
                 ) : (
-                  <ProductPrice price={taxPrice} plain />
+                  formatPrice(taxPrice)
                 )}
               </span>
             </div>
             <div className='flex justify-between  pt-4 font-bold text-lg'>
               <span> Order Total:</span>
               <span>
-                <ProductPrice price={totalPrice} plain />
+                {formatPrice(totalPrice)}
               </span>
             </div>
           </div>
@@ -248,13 +268,13 @@ const CheckoutForm = () => {
   )
 
   return (
-    <main className='max-w-6xl mx-auto highlight-link'>
+    <main className='max-w-6xl mx-auto highlight-link px-4 sm:px-6'>
       <div className='grid md:grid-cols-4 gap-6'>
         <div className='md:col-span-3'>
           {/* shipping address */}
           <div>
             {isAddressSelected && shippingAddress ? (
-              <div className='grid grid-cols-1 md:grid-cols-12    my-3  pb-3'>
+              <div className='grid grid-cols-1 md:grid-cols-12 my-3 pb-3'>
                 <div className='col-span-5 flex text-lg font-bold '>
                   <span className='w-8'>1 </span>
                   <span>Shipping address</span>
@@ -417,12 +437,13 @@ const CheckoutForm = () => {
                           />
                         </div>
                       </CardContent>
-                      <CardFooter className='  p-4'>
+                      <CardFooter className='p-4'>
                         <Button
                           type='submit'
                           className='rounded-full font-bold'
+                          disabled={!shippingAddressForm.formState.isValid || shippingAddressForm.formState.isSubmitting}
                         >
-                          Ship to this address
+                          {shippingAddressForm.formState.isSubmitting ? 'Saving...' : 'Ship to this address'}
                         </Button>
                       </CardFooter>
                     </Card>
@@ -434,8 +455,8 @@ const CheckoutForm = () => {
           {/* payment method */}
           <div className='border-y'>
             {isPaymentMethodSelected && paymentMethod ? (
-              <div className='grid  grid-cols-1 md:grid-cols-12  my-3 pb-3'>
-                <div className='flex text-lg font-bold  col-span-5'>
+              <div className='grid grid-cols-1 md:grid-cols-12 my-3 pb-3'>
+                <div className='flex text-lg font-bold col-span-5'>
                   <span className='w-8'>2 </span>
                   <span>Payment Method</span>
                 </div>
@@ -502,8 +523,8 @@ const CheckoutForm = () => {
           {/* items and delivery date */}
           <div>
             {isDeliveryDateSelected && deliveryDateIndex != undefined ? (
-              <div className='grid  grid-cols-1 md:grid-cols-12  my-3 pb-3'>
-                <div className='flex text-lg font-bold  col-span-5'>
+              <div className='grid grid-cols-1 md:grid-cols-12 my-3 pb-3'>
+                <div className='flex text-lg font-bold col-span-5'>
                   <span className='w-8'>3 </span>
                   <span>Items and shipping</span>
                 </div>
@@ -522,7 +543,7 @@ const CheckoutForm = () => {
                   <ul>
                     {items.map((item, _index) => (
                       <li key={_index}>
-                        {item.name} x {item.quantity} = {item.price}
+                        {item.name} x {item.quantity} = {formatPrice(item.price)}
                       </li>
                     ))}
                   </ul>
@@ -541,7 +562,7 @@ const CheckoutForm = () => {
               </div>
             ) : isPaymentMethodSelected && isAddressSelected ? (
               <>
-                <div className='flex text-primary  text-lg font-bold my-2'>
+                <div className='flex text-primary text-lg font-bold my-2'>
                   <span className='w-8'>3 </span>
                   <span>Review items and shipping</span>
                 </div>
@@ -583,7 +604,7 @@ const CheckoutForm = () => {
                                 {item.name}, {item.color}, {item.size}
                               </p>
                               <p className='font-bold'>
-                                <ProductPrice price={item.price} plain />
+                                {formatPrice(item.price)}
                               </p>
 
                               <Select
@@ -616,7 +637,7 @@ const CheckoutForm = () => {
                         ))}
                       </div>
                       <div>
-                        <div className=' font-bold'>
+                        <div className='font-bold'>
                           <p className='mb-2'> Choose a shipping speed:</p>
 
                           <ul>
@@ -656,10 +677,7 @@ const CheckoutForm = () => {
                                         : dd.shippingPrice) === 0 ? (
                                         'FREE Shipping'
                                       ) : (
-                                        <ProductPrice
-                                          price={dd.shippingPrice}
-                                          plain
-                                        />
+                                        formatPrice(dd.shippingPrice)
                                       )}
                                     </div>
                                   </Label>
@@ -688,12 +706,16 @@ const CheckoutForm = () => {
 
               <Card className='hidden md:block '>
                 <CardContent className='p-4 flex flex-col md:flex-row justify-between items-center gap-3'>
-                  <Button onClick={handlePlaceOrder} className='rounded-full'>
-                    Place Your Order
+                  <Button 
+                    onClick={handlePlaceOrder} 
+                    className='rounded-full'
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Processing...' : 'Place Your Order'}
                   </Button>
                   <div className='flex-1'>
                     <p className='font-bold text-lg'>
-                      Order Total: <ProductPrice price={totalPrice} plain />
+                      Order Total: {formatPrice(totalPrice)}
                     </p>
                     <p className='text-xs'>
                       {' '}

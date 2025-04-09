@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   PayPalButtons,
   PayPalScriptProvider,
@@ -17,25 +18,24 @@ import { formatDateTime } from '@/lib/utils'
 import CheckoutFooter from '../checkout-footer'
 import { redirect, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import ProductPrice from '@/components/shared/product/product-price'
-// import StripeForm from './stripe-form'
-// import { Elements } from '@stripe/react-stripe-js'
-// import { loadStripe } from '@stripe/stripe-js'
 
-// const stripePromise = loadStripe(
-//   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
-// )
+// Utility function for price formatting
+const formatPrice = (price?: number) => {
+  if (price === undefined) return '--';
+  return `₹${price.toFixed(2)}`;
+};
+
 export default function OrderDetailsForm({
   order,
   paypalClientId,
-//   clientSecret,
 }: {
   order: IOrder
   paypalClientId: string
   isAdmin: boolean
-//   clientSecret: string | null
 }) {
   const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const {
     shippingAddress,
     items,
@@ -49,9 +49,16 @@ export default function OrderDetailsForm({
   } = order
   const { toast } = useToast()
 
+  // Handle component lifecycle to prevent issues during hot reloading
+  useEffect(() => {
+    setIsMounted(true)
+    return () => setIsMounted(false)
+  }, [])
+
   if (isPaid) {
     redirect(`/account/orders/${order._id}`)
   }
+  
   function PrintLoadingState() {
     const [{ isPending, isRejected }] = usePayPalScriptReducer()
     let status = ''
@@ -62,21 +69,53 @@ export default function OrderDetailsForm({
     }
     return status
   }
+  
   const handleCreatePayPalOrder = async () => {
-    const res = await createPayPalOrder(order._id)
-    if (!res.success)
-      return toast({
-        description: res.message,
+    setIsProcessing(true)
+    try {
+      const res = await createPayPalOrder(order._id)
+      if (!res.success) {
+        toast({
+          description: res.message,
+          variant: 'destructive',
+        })
+        return null
+      }
+      return res.data
+    } catch (error) {
+      console.error('PayPal createOrder error:', error)
+      toast({
+        description: 'Failed to create PayPal order. Please try again.',
         variant: 'destructive',
       })
-    return res.data
+      return null
+    } finally {
+      setIsProcessing(false)
+    }
   }
+  
   const handleApprovePayPalOrder = async (data: { orderID: string }) => {
-    const res = await approvePayPalOrder(order._id, data)
-    toast({
-      description: res.message,
-      variant: res.success ? 'default' : 'destructive',
-    })
+    setIsProcessing(true)
+    try {
+      const res = await approvePayPalOrder(order._id, data)
+      toast({
+        description: res.message,
+        variant: res.success ? 'default' : 'destructive',
+      })
+      
+      // If payment was successful, redirect to order page
+      if (res.success) {
+        router.push(`/account/orders/${order._id}`)
+      }
+    } catch (error) {
+      console.error('PayPal approveOrder error:', error)
+      toast({
+        description: 'Failed to process payment. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const CheckoutSummary = () => (
@@ -88,8 +127,7 @@ export default function OrderDetailsForm({
             <div className='flex justify-between'>
               <span>Items:</span>
               <span>
-                {' '}
-                <ProductPrice price={itemsPrice} plain />
+                {formatPrice(itemsPrice)}
               </span>
             </div>
             <div className='flex justify-between'>
@@ -100,7 +138,7 @@ export default function OrderDetailsForm({
                 ) : shippingPrice === 0 ? (
                   'FREE'
                 ) : (
-                  <ProductPrice price={shippingPrice} plain />
+                  formatPrice(shippingPrice)
                 )}
               </span>
             </div>
@@ -110,42 +148,52 @@ export default function OrderDetailsForm({
                 {taxPrice === undefined ? (
                   '--'
                 ) : (
-                  <ProductPrice price={taxPrice} plain />
+                  formatPrice(taxPrice)
                 )}
               </span>
             </div>
-            <div className='flex justify-between  pt-1 font-bold text-lg'>
+            <div className='flex justify-between pt-1 font-bold text-lg'>
               <span> Order Total:</span>
               <span>
-                {' '}
-                <ProductPrice price={totalPrice} plain />
+                {formatPrice(totalPrice)}
               </span>
             </div>
 
-            {!isPaid && paymentMethod === 'PayPal' && (
+            {isMounted && !isPaid && paymentMethod === 'PayPal' && (
               <div>
-                <PayPalScriptProvider options={{ clientId: paypalClientId }}>
+                <PayPalScriptProvider 
+                  options={{ 
+                    clientId: paypalClientId,
+                    components: "buttons",
+                    currency: "INR",
+                    intent: "capture"
+                  }}
+                >
                   <PrintLoadingState />
                   <PayPalButtons
+                    style={{ layout: "vertical" }}
                     createOrder={handleCreatePayPalOrder}
                     onApprove={handleApprovePayPalOrder}
+                    disabled={isProcessing}
+                    onError={(err) => {
+                      console.error('PayPal error:', err);
+                      toast({
+                        description: 'PayPal encountered an error. Please try again.',
+                        variant: 'destructive',
+                      });
+                      setIsProcessing(false);
+                    }}
+                    onCancel={() => {
+                      toast({
+                        description: 'Payment cancelled.',
+                        variant: 'default',
+                      });
+                      setIsProcessing(false);
+                    }}
                   />
                 </PayPalScriptProvider>
               </div>
             )}
-            {/* {!isPaid && paymentMethod === 'Stripe' && clientSecret && (
-              <Elements
-                options={{
-                  clientSecret,
-                }}
-                stripe={stripePromise}
-              >
-                <StripeForm
-                  priceInCents={Math.round(order.totalPrice * 100)}
-                  orderId={order._id}
-                />
-              </Elements>
-            )} */}
 
             {!isPaid && paymentMethod === 'Cash On Delivery' && (
               <Button
@@ -162,7 +210,7 @@ export default function OrderDetailsForm({
   )
 
   return (
-    <main className='max-w-6xl mx-auto'>
+    <main className='max-w-6xl mx-auto px-4 sm:px-6'>
       <div className='grid md:grid-cols-4 gap-6'>
         <div className='md:col-span-3'>
           {/* Shipping Address */}
@@ -199,13 +247,14 @@ export default function OrderDetailsForm({
             </div>
             <div className='col-span-2'>
               <p>
-                Delivery date:
+                Delivery date:{' '}
                 {formatDateTime(expectedDeliveryDate).dateOnly}
               </p>
-              <ul>
+              <ul className='space-y-1 mt-2'>
                 {items.map((item) => (
-                  <li key={item.slug}>
-                    {item.name} x {item.quantity} = {item.price}
+                  <li key={item.slug} className='flex justify-between'>
+                    <span>{item.name} x {item.quantity}</span>
+                    <span>{formatPrice(item.price * item.quantity)}</span>
                   </li>
                 ))}
               </ul>
