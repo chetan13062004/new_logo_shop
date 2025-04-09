@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Metadata } from 'next'
+
 import Pagination from '@/components/shared/pagination'
 import ProductCard from '@/components/shared/product/product-card'
 import { Button } from '@/components/ui/button'
@@ -22,41 +24,21 @@ const sortOrders = [
 ]
 
 const prices = [
-  {
-    name: 'Rs 1 to Rs 1,500',
-    value: '1-1500',
-  },
-  {
-    name: 'Rs 1,501 to Rs 4,000',
-    value: '1501-4000',
-  },
-  {
-    name: 'Rs 4,001 to Rs 80,000',
-    value: '4001-80000',
-  },
+  { name: 'Rs 1 to Rs 1,500', value: '1-1500' },
+  { name: 'Rs 1,501 to Rs 4,000', value: '1501-4000' },
+  { name: 'Rs 4,001 to Rs 80,000', value: '4001-80000' },
 ]
 
-// Define the correct interface for Next.js 15 page props
-interface SearchPageProps {
-  searchParams: {
-    q?: string
-    category?: string
-    tag?: string
-    price?: string
-    rating?: string
-    sort?: string
-    page?: string
-  }
+interface PageProps {
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-export async function generateMetadata({
-  searchParams,
-}: SearchPageProps) {
-  const q = searchParams.q || 'all'
-  const category = searchParams.category || 'all'
-  const tag = searchParams.tag || 'all'
-  const price = searchParams.price || 'all'
-  const rating = searchParams.rating || 'all'
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
 
   if (
     (q !== 'all' && q !== '') ||
@@ -67,32 +49,27 @@ export async function generateMetadata({
   ) {
     return {
       title: `Search Results${q !== 'all' ? ' for "' + q + '"' : ''}
-          ${category !== 'all' ? ` : Category ${category}` : ''}
-          ${tag !== 'all' ? ` : Tag ${tag}` : ''}
-          ${price !== 'all' ? ` : Price ${price}` : ''}
-          ${rating !== 'all' ? ` : Rating ${rating}` : ''}`,
+        ${category !== 'all' ? ` : Category ${category}` : ''}
+        ${tag !== 'all' ? ` : Tag ${tag}` : ''}
+        ${price !== 'all' ? ` : Price ${price}` : ''}
+        ${rating !== 'all' ? ` : Rating ${rating}` : ''}`,
     }
   } else {
-    return {
-      title: 'Search Products',
-    }
+    return { title: 'Search Products' }
   }
 }
 
-export default async function SearchPage({
-  searchParams,
-}: SearchPageProps) {
-  const q = searchParams.q || 'all'
-  const category = searchParams.category || 'all'
-  const tag = searchParams.tag || 'all'
-  const price = searchParams.price || 'all'
-  const rating = searchParams.rating || 'all'
-  const sort = searchParams.sort || 'best-selling'
-  const page = searchParams.page || '1'
+export default async function SearchPage({ searchParams }: PageProps) {
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
+  const sort = (searchParams?.sort as string) || 'best-selling'
+  const page = (searchParams?.page as string) || '1'
 
   const filterParams = { q, category, tag, price, rating, sort, page }
 
-  // Fetch data using Promise.all for parallel requests
   const [categories, tags, data] = await Promise.all([
     getAllCategories(),
     getAllTags(),
@@ -104,8 +81,8 @@ export default async function SearchPage({
       rating,
       page: Number(page),
       sort,
-    })
-  ]);
+    }),
+  ])
 
   return (
     <div className='px-4 py-6 md:px-6 lg:px-12'>
@@ -148,6 +125,7 @@ export default async function SearchPage({
       <div className='grid grid-cols-1 md:grid-cols-5 md:gap-6'>
         <CollapsibleOnMobile title='Filters'>
           <div className='space-y-6 text-sm'>
+            {/* Category Filter */}
             <div>
               <h3 className='font-semibold mb-1'>Department</h3>
               <ul className='space-y-1'>
@@ -172,6 +150,7 @@ export default async function SearchPage({
               </ul>
             </div>
 
+            {/* Price Filter */}
             <div>
               <h3 className='font-semibold mb-1'>Price</h3>
               <ul className='space-y-1'>
@@ -196,6 +175,7 @@ export default async function SearchPage({
               </ul>
             </div>
 
+            {/* Rating Filter */}
             <div>
               <h3 className='font-semibold mb-1'>Customer Reviews</h3>
               <ul className='space-y-1'>
@@ -221,6 +201,7 @@ export default async function SearchPage({
               </ul>
             </div>
 
+            {/* Tag Filter */}
             <div>
               <h3 className='font-semibold mb-1'>Tag</h3>
               <ul className='space-y-1'>
@@ -247,6 +228,7 @@ export default async function SearchPage({
           </div>
         </CollapsibleOnMobile>
 
+        {/* Product List */}
         <div className='md:col-span-4 space-y-6'>
           <div>
             <h2 className='text-2xl font-semibold'>Results</h2>
