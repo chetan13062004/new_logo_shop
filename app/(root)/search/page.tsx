@@ -34,9 +34,10 @@ const prices = [
 type SearchParamsType = { [key: string]: string | string[] | undefined };
 
 interface SearchPageProps {
-  params: { [key: string]: string };
-  searchParams: SearchParamsType;
+  params: { [key: string]: string | string[] };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
+
 
 // Define a proper type for the product data response
 interface ProductData {
