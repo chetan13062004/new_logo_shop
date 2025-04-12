@@ -39,6 +39,11 @@ import useCartStore from '@/hooks/use-cart-store'
 import { APP_NAME, AVAILABLE_DELIVERY_DATES, AVAILABLE_PAYMENT_METHOD, DEFAULT_PAYMENT_METHOD } from '@/lib/constants'
 import { createOrder } from '@/lib/actions/order.actions'
 
+// Define the props interface for CheckoutForm
+interface CheckoutFormProps {
+  userAddresses: any[]; // You can replace 'any' with a more specific type if available
+}
+
 // Utility function for price formatting
 const formatPrice = (price?: number) => {
   if (price === undefined) return '--';
@@ -66,7 +71,7 @@ const shippingAddressDefaultValues =
         country: '',
       }
 
-const CheckoutForm = () => {
+const CheckoutForm = ({ userAddresses }: CheckoutFormProps) => {
   const { toast } = useToast()
   const router = useRouter()
   const isMounted = useIsMounted()
@@ -87,7 +92,7 @@ const CheckoutForm = () => {
     updateItem,
     removeItem,
     clearCart,
-    setDeliveryDateIndex,
+    updateDeliveryDateIndex, // Changed from setDeliveryDateIndex to updateDeliveryDateIndex
   } = useCartStore()
 
   const shippingAddressForm = useForm<ShippingAddress>({
@@ -130,7 +135,7 @@ const CheckoutForm = () => {
     try {
       const res = await createOrder({
         items,
-        shippingAddress,
+        shippingAddress: shippingAddress || undefined,
         expectedDeliveryDate: calculateFutureDate(
           AVAILABLE_DELIVERY_DATES[deliveryDateIndex!].daysToDeliver
         ),
@@ -154,6 +159,7 @@ const CheckoutForm = () => {
         clearCart()
         router.push(`/checkout/${res.data?.orderId}`)
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         description: 'An error occurred while placing your order.',
@@ -646,8 +652,8 @@ const CheckoutForm = () => {
                                 AVAILABLE_DELIVERY_DATES[deliveryDateIndex!].name
                               }
                               onValueChange={(value) =>
-                                setDeliveryDateIndex(
-                                    AVAILABLE_DELIVERY_DATES.findIndex(
+                                updateDeliveryDateIndex(
+                                  AVAILABLE_DELIVERY_DATES.findIndex(
                                     (address) => address.name === value
                                   )!
                                 )
@@ -744,4 +750,5 @@ const CheckoutForm = () => {
     </main>
   )
 }
+
 export default CheckoutForm

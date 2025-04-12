@@ -24,21 +24,38 @@ const sortOrders = [
 ]
 
 const prices = [
-  { name: 'Rs 1 to Rs 1,500', value: '1-1500' },
-  { name: 'Rs 1,501 to Rs 4,000', value: '1501-4000' },
-  { name: 'Rs 4,001 to Rs 80,000', value: '4001-80000' },
+  { name: 'Rs 1 to Rs 1,000', value: '1-1000' },
+  { name: 'Rs 1,001 to Rs 2,000', value: '1001-2000' },
+  { name: 'Rs 2,001 to Rs 3,000', value: '2001-3000' },
+  { name: 'Above Rs 3,000', value: '3001-1000000' },
 ]
 
-interface PageProps {
-  searchParams?: { [key: string]: string | string[] | undefined }
+
+type SearchParamsType = { [key: string]: string | string[] | undefined };
+
+interface SearchPageProps {
+  params: { [key: string]: string };
+  searchParams: SearchParamsType;
 }
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const q = (searchParams?.q as string) || 'all'
-  const category = (searchParams?.category as string) || 'all'
-  const tag = (searchParams?.tag as string) || 'all'
-  const price = (searchParams?.price as string) || 'all'
-  const rating = (searchParams?.rating as string) || 'all'
+// Define a proper type for the product data response
+interface ProductData {
+  products: IProduct[];
+  totalProducts: number;
+  totalPages: number;
+  from: number;
+  to: number;
+}
+
+export async function generateMetadata(
+  { searchParams }: SearchPageProps
+): Promise<Metadata> {
+  const searchParamsData = await Promise.resolve(searchParams)
+  const q = (searchParamsData?.q as string) || 'all'
+  const category = (searchParamsData?.category as string) || 'all'
+  const tag = (searchParamsData?.tag as string) || 'all'
+  const price = (searchParamsData?.price as string) || 'all'
+  const rating = (searchParamsData?.rating as string) || 'all'
 
   if (
     (q !== 'all' && q !== '') ||
@@ -59,14 +76,17 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   }
 }
 
-export default async function SearchPage({ searchParams }: PageProps) {
-  const q = (searchParams?.q as string) || 'all'
-  const category = (searchParams?.category as string) || 'all'
-  const tag = (searchParams?.tag as string) || 'all'
-  const price = (searchParams?.price as string) || 'all'
-  const rating = (searchParams?.rating as string) || 'all'
-  const sort = (searchParams?.sort as string) || 'best-selling'
-  const page = (searchParams?.page as string) || '1'
+export default async function SearchPage(
+  { searchParams }: SearchPageProps
+) {
+  const searchParamsData = await Promise.resolve(searchParams)
+  const q = (searchParamsData?.q as string) || 'all'
+  const category = (searchParamsData?.category as string) || 'all'
+  const tag = (searchParamsData?.tag as string) || 'all'
+  const price = (searchParamsData?.price as string) || 'all'
+  const rating = (searchParamsData?.rating as string) || 'all'
+  const sort = (searchParamsData?.sort as string) || 'best-selling'
+  const page = (searchParamsData?.page as string) || '1'
 
   const filterParams = { q, category, tag, price, rating, sort, page }
 
@@ -82,7 +102,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       page: Number(page),
       sort,
     }),
-  ])
+  ]) as [string[], string[], ProductData]
 
   return (
     <div className='px-4 py-6 md:px-6 lg:px-12'>

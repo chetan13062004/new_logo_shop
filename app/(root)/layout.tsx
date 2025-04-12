@@ -1,45 +1,17 @@
-import { Geist, Geist_Mono } from 'next/font/google'
-import '@/app/globals.css'  // Changed to use the @/ alias which is more reliable
-import ClientProviders from '@/components/shared/client-providers'
-import { APP_DESCRIPTION, APP_NAME, APP_SLOGAN } from '@/lib/constants'
+import Footer from '@/components/shared/footer'
+import Header from '@/components/shared/header'
+import React from 'react'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
-
-export async function generateMetadata() {
-  return {
-    title: {
-      template: `%s | ${APP_NAME}`,
-      default: `${APP_NAME}. ${APP_SLOGAN}`,
-    },
-    description: APP_DESCRIPTION,
-  }
-}
-
-export default async function AppLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html
-      lang='en'
-      suppressHydrationWarning
-    >
-      <body
-        className={`min-h-screen ${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ClientProviders>
-          {children}
-        </ClientProviders>
-      </body>
-    </html>
+    <>
+      <Header />
+      <main className="min-h-screen">{children}</main>
+      <Footer />
+    </>
   )
 }

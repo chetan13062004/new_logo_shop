@@ -14,10 +14,10 @@ export default function CheckoutLayout({
         <div className='max-w-6xl mx-auto flex justify-between items-center'>
           <Link href='/'>
             <Image
-              src='/icons/logo.svg'
+              src='/icons/logo.png'
               alt='logo'
-              width={70}
-              height={70}
+              width={100}
+              height={100}
               style={{
                 maxWidth: '100%',
                 height: 'auto',

@@ -1,177 +1,96 @@
-// import { create } from 'zustand'
-// import { persist } from 'zustand/middleware'
-
-// import { Cart, OrderItem } from '@/types'
-// import { calcDeliveryDateAndPrice } from '@/lib/actions/order.actions'
-
-// const initialState: Cart = {
-//   items: [],
-//   itemsPrice: 0,
-//   taxPrice: undefined,
-//   shippingPrice: undefined,
-//   totalPrice: 0,
-//   paymentMethod: undefined,
-//   shippingAddress: undefined,
-//   deliveryDateIndex: undefined,
-// }
-
-// interface CartState {
-//   cart: Cart
-//   addItem: (item: OrderItem, quantity: number) => Promise<string>
-//   updateItem: (item: OrderItem, quantity: number) => Promise<void>
-// }
-
-// const useCartStore = create(
-//   persist<CartState>(
-//     (set, get) => ({
-//       cart: initialState,
-
-//       addItem: async (item: OrderItem, quantity: number) => {
-//         const { items } = get().cart
-//         const existItem = items.find(
-//           (x) =>
-//             x.product === item.product &&
-//             x.color === item.color &&
-//             x.size === item.size
-//         )
-
-//         if (existItem) {
-//           if (existItem.countInStock < existItem.quantity + quantity) {
-//             throw new Error('Not enough items in stock')
-//           }
-//         } else {
-//           if (item.countInStock < quantity) {
-//             throw new Error('Not enough items in stock')
-//           }
-//         }
-
-//         const updatedCartItems = existItem
-//           ? items.map((x) =>
-//               x.product === item.product &&
-//               x.color === item.color &&
-//               x.size === item.size
-//                 ? { ...existItem, quantity: existItem.quantity + quantity }
-//                 : x
-//             )
-//           : [...items, { ...item, quantity }]
-
-//         const updatedCart = {
-//           ...get().cart,
-//           items: updatedCartItems,
-//           ...(await calcDeliveryDateAndPrice({ items: updatedCartItems })),
-//         }
-
-//         set({ cart: updatedCart })
-
-//         const foundItem = updatedCartItems.find(
-//           (x) =>
-//             x.product === item.product &&
-//             x.color === item.color &&
-//             x.size === item.size
-//         )
-//         if (!foundItem) {
-//           throw new Error('Item not found in cart')
-//         }
-//         return foundItem.clientId
-//       },
-
-//       updateItem: async (item: OrderItem, quantity: number) => {
-//         const { items } = get().cart
-//         const exist = items.find(
-//           (x) =>
-//             x.product === item.product &&
-//             x.color === item.color &&
-//             x.size === item.size
-//         )
-//         if (!exist) return
-
-//         const updatedCartItems = items.map((x) =>
-//           x.product === item.product &&
-//           x.color === item.color &&
-//           x.size === item.size
-//             ? { ...exist, quantity }
-//             : x
-//         )
-
-//         const updatedCart = {
-//           ...get().cart,
-//           items: updatedCartItems,
-//           ...(await calcDeliveryDateAndPrice({ items: updatedCartItems })),
-//         }
-
-//         set({ cart: updatedCart })
-//       },
-//     }),
-//     {
-//       name: 'cart-store',
-//     }
-//   )
-// )
-
-// export default useCartStore
-
-
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, PersistOptions } from 'zustand/middleware'
+import { v4 as uuidv4 } from 'uuid'
 
-import { Cart, OrderItem , ShippingAddress} from '@/types'
-import { calcDeliveryDateAndPrice } from '@/lib/actions/order.actions'
-
-const initialState: Cart = {
-  items: [],
-  itemsPrice: 0,
-  taxPrice: undefined,
-  shippingPrice: undefined,
-  totalPrice: 0,
-  paymentMethod: undefined,
-  shippingAddress: undefined,
-  deliveryDateIndex: undefined,
+// Define the CartItem interface
+export interface CartItem {
+  clientId: string;
+  product: string;
+  name: string;
+  slug: string;
+  category: string;
+  image: string;
+  price: number;
+  countInStock: number;
+  quantity: number;
+  color?: string;
+  size?: string;
 }
 
-const expectedDelivery = {
-  name: "Standard Shipping",
-  daysToDeliver: 3, // Number of days to deliver
-  shippingPrice: 10,
-  freeShippingMinPrice: 50,
+// Define the ShippingAddress interface
+export interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  city: string;
+  postalCode: string;
+  street: string;
+  province: string;
+  country: string;
+}
+
+// Define the Cart interface
+export interface Cart {
+  items: CartItem[];
+  shippingAddress: ShippingAddress | null;
+  paymentMethod: string;
+  itemsPrice: number;
+  shippingPrice: number;
+  taxPrice: number;
+  totalPrice: number;
+  deliveryDateIndex: number;
+  expectedDeliveryDate: Date | null;
+}
+
+// Define the CartStore interface
+interface CartStore {
+  cart: Cart;
+  addItem: (item: CartItem, quantity: number) => Promise<void>;
+  updateItem: (item: CartItem, quantity: number) => Promise<void>;
+  removeItem: (item: CartItem) => void;
+  clearCart: () => void;
+  setShippingAddress: (shippingAddress: ShippingAddress) => void; // Added this
+  setPaymentMethod: (paymentMethod: string) => void; // Added this
+  updateDeliveryDateIndex: (index: number) => void; // Added this
+}
+
+// Define the type for the persist configuration
+type CartPersistConfig = {
+  name: string;
+  storage?: Storage;
+  getStorage: () => Storage;
 };
 
-// Convert daysToDeliver to a Date
-const expectedDeliveryDate = new Date();
-expectedDeliveryDate.setDate(expectedDeliveryDate.getDate() + expectedDelivery.daysToDeliver);
-
-
-interface CartState {
-  cart: Cart
-  addItem: (item: OrderItem, quantity: number) => Promise<string>
-  updateItem: (item: OrderItem, quantity: number) => Promise<void>
-  removeItem: (item: OrderItem) => void
-  clearCart: () => void
-  setShippingAddress: (shippingAddress: ShippingAddress) => Promise<void>
-  setPaymentMethod: (paymentMethod: string) => void
-  setDeliveryDateIndex: (index: number) => Promise<void>
-}
-
-const useCartStore = create(
-  persist<CartState>(
+// Create the cart store
+const useCartStore = create<CartStore>()(
+  persist(
     (set, get) => ({
-      cart: initialState,
-
-      addItem: async (item: OrderItem, quantity: number) => {
-        const { items, shippingAddress } = get().cart
+      cart: {
+        items: [],
+        shippingAddress: null,
+        paymentMethod: '',
+        itemsPrice: 0,
+        shippingPrice: 0,
+        taxPrice: 0,
+        totalPrice: 0,
+        deliveryDateIndex: 0,
+        expectedDeliveryDate: null,
+      },
+      addItem: async (item: CartItem, quantity: number) => {
+        const { items, shippingAddress } = get().cart;
         const existItem = items.find(
           (x) =>
             x.product === item.product &&
             x.color === item.color &&
             x.size === item.size
-        )
+        );
 
         if (existItem) {
           if (existItem.countInStock < quantity + existItem.quantity) {
-            throw new Error('Not enough items in stock')
+            throw new Error('Not enough items in stock');
           }
         } else {
           if (item.countInStock < item.quantity) {
-            throw new Error('Not enough items in stock')
+            throw new Error('Not enough items in stock');
           }
         }
 
@@ -183,86 +102,117 @@ const useCartStore = create(
                 ? { ...existItem, quantity: existItem.quantity + quantity }
                 : x
             )
-          : [...items, { ...item, quantity }]
+          : [
+              ...items,
+              {
+                ...item,
+                quantity,
+                clientId: uuidv4(),
+              },
+            ];
+
+        // Calculate totals
+        const itemsPrice = updatedCartItems.reduce(
+          (a: number, c: CartItem) => a + c.price * c.quantity,
+          0
+        );
+        const shippingPrice = 0; // You can calculate this based on your business logic
+        const taxPrice = 0; // You can calculate this based on your business logic
+        const totalPrice = itemsPrice + shippingPrice + taxPrice;
 
         set({
           cart: {
             ...get().cart,
             items: updatedCartItems,
-            ...(await calcDeliveryDateAndPrice({
-              items: updatedCartItems,
-              shippingAddress,
-            })),
+            itemsPrice,
+            shippingPrice,
+            taxPrice,
+            totalPrice,
           },
-        })
-        const foundItem = updatedCartItems.find(
-          (x) =>
-            x.product === item.product &&
-            x.color === item.color &&
-            x.size === item.size
-        )
-        if (!foundItem) {
-          throw new Error('Item not found in cart')
-        }
-        return foundItem.clientId
+        });
       },
-      updateItem: async (item: OrderItem, quantity: number) => {
-        const { items, shippingAddress } = get().cart
+      updateItem: async (item: CartItem, quantity: number) => {
+        const { items, shippingAddress } = get().cart;
         const exist = items.find(
           (x) =>
             x.product === item.product &&
             x.color === item.color &&
             x.size === item.size
-        )
-        if (!exist) return
+        );
+        if (!exist) return;
         const updatedCartItems = items.map((x) =>
           x.product === item.product &&
           x.color === item.color &&
           x.size === item.size
             ? { ...exist, quantity: quantity }
             : x
-        )
+        );
+        
+        // Calculate totals
+        const itemsPrice = updatedCartItems.reduce(
+          (a: number, c: CartItem) => a + c.price * c.quantity,
+          0
+        );
+        const shippingPrice = 0; // You can calculate this based on your business logic
+        const taxPrice = 0; // You can calculate this based on your business logic
+        const totalPrice = itemsPrice + shippingPrice + taxPrice;
+        
         set({
           cart: {
             ...get().cart,
             items: updatedCartItems,
-            ...(await calcDeliveryDateAndPrice({
-              items: updatedCartItems,
-              shippingAddress,
-            })),
+            itemsPrice,
+            shippingPrice,
+            taxPrice,
+            totalPrice,
           },
-        })
+        });
       },
-      removeItem: async (item: OrderItem) => {
-        const { items, shippingAddress } = get().cart
+      removeItem: (item: CartItem) => {
+        const { items } = get().cart;
         const updatedCartItems = items.filter(
-          (x) =>
-            x.product !== item.product ||
-            x.color !== item.color ||
-            x.size !== item.size
-        )
+          (x) => x.clientId !== item.clientId
+        );
+        
+        // Calculate totals
+        const itemsPrice = updatedCartItems.reduce(
+          (a: number, c: CartItem) => a + c.price * c.quantity,
+          0
+        );
+        const shippingPrice = 0; // You can calculate this based on your business logic
+        const taxPrice = 0; // You can calculate this based on your business logic
+        const totalPrice = itemsPrice + shippingPrice + taxPrice;
+        
         set({
           cart: {
             ...get().cart,
             items: updatedCartItems,
-            ...(await calcDeliveryDateAndPrice({
-              items: updatedCartItems,
-              shippingAddress,
-            })),
+            itemsPrice,
+            shippingPrice,
+            taxPrice,
+            totalPrice,
           },
-        })
+        });
       },
-      setShippingAddress: async (shippingAddress: ShippingAddress) => {
-        const { items } = get().cart
+      clearCart: () => {
+        set({
+          cart: {
+            ...get().cart,
+            items: [],
+            itemsPrice: 0,
+            shippingPrice: 0,
+            taxPrice: 0,
+            totalPrice: 0,
+          },
+        });
+      },
+      setShippingAddress: (shippingAddress: ShippingAddress) => {
         set({
           cart: {
             ...get().cart,
             shippingAddress,
-            ...(await calcDeliveryDateAndPrice({
-              items,
-            })),
           },
-        })
+        });
       },
       setPaymentMethod: (paymentMethod: string) => {
         set({
@@ -270,35 +220,22 @@ const useCartStore = create(
             ...get().cart,
             paymentMethod,
           },
-        })
+        });
       },
-      setDeliveryDateIndex: async (index: number) => {
-        const { items, shippingAddress } = get().cart
-
+      updateDeliveryDateIndex: (index: number) => {
         set({
           cart: {
             ...get().cart,
-            ...(await calcDeliveryDateAndPrice({
-              items,
-              deliveryDateIndex: index,
-            })),
+            deliveryDateIndex: index,
           },
-        })
+        });
       },
-      clearCart: () => {
-        set({
-          cart: {
-            ...get().cart,
-            items: [],
-          },
-        })
-      },
-      init: () => set({ cart: initialState }),
     }),
-
     {
-      name: 'cart-store',
-    }
+      name: 'cart-storage',
+      getStorage: () => localStorage,
+    } as PersistOptions<CartStore, unknown> & CartPersistConfig
   )
-)
-export default useCartStore
+);
+
+export default useCartStore;

@@ -28,9 +28,9 @@ export default async function Header() {
             >
               <Image
                 // src={site.logo}
-                src='/icons/logo.svg'
-                width={40}
-                height={40}
+                src='/icons/logo.png'
+                width={100}
+                height={100}
                 alt={`${APP_NAME} logo`}
               />
               {APP_NAME}

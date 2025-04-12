@@ -1,44 +1,39 @@
-import { Geist, Geist_Mono } from 'next/font/google'
-import '@/app/globals.css'  // Changed to use the @/ alias which is more reliable
-import ClientProviders from '@/components/shared/client-providers'
-import { APP_DESCRIPTION, APP_NAME, APP_SLOGAN } from '@/lib/constants'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { Toaster } from '@/components/ui/toaster'
+import NextAuthSessionProvider from '@/components/providers/session-provider'
+import { auth } from '@/auth'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
+const inter = Inter({ subsets: ['latin'] })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
-
-export async function generateMetadata() {
-  return {
-    title: {
-      template: `%s | ${APP_NAME}`,
-      default: `${APP_NAME}. ${APP_SLOGAN}`,
-    },
-    description: APP_DESCRIPTION,
-  }
+export const metadata: Metadata = {
+  title: 'Shoe Store',
+  description: 'Your one-stop shop for all types of shoes',
 }
 
-export default async function AppLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await auth()
+  
   return (
-    <html
-      lang='en'
-      suppressHydrationWarning
-    >
-      <body
-        className={`min-h-screen ${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <NextAuthSessionProvider session={session as any}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </NextAuthSessionProvider>
       </body>
     </html>
   )
