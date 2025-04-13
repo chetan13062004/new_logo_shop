@@ -38,6 +38,8 @@ import Link from 'next/link'
 import useCartStore from '@/hooks/use-cart-store'
 import { APP_NAME, AVAILABLE_DELIVERY_DATES, AVAILABLE_PAYMENT_METHOD, DEFAULT_PAYMENT_METHOD } from '@/lib/constants'
 import { createOrder } from '@/lib/actions/order.actions'
+import { Textarea } from '@/components/ui/textarea'
+import { Separator } from '@/components/ui/separator'
 
 // Define the props interface for CheckoutForm
 interface CheckoutFormProps {
