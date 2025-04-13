@@ -1,8 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getAddresses } from '@/lib/actions/address.actions'
-import { AddressList } from './address-list'
-
+import AddressList from './address-list'
 const PAGE_TITLE = 'Your Addresses'
 export const metadata: Metadata = {
   title: PAGE_TITLE,

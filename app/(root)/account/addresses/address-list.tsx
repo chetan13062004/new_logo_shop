@@ -2,11 +2,12 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { useToast } from '@/components/ui/usetoast'
-import { deleteAddress } from '@/lib/actions/address.actions'
+import { useToast } from '@/hooks/use-toast'
+import { deleteAddress, getAddresses } from '@/lib/actions/address.actions'
 import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface Address {
   _id: string;
@@ -19,25 +20,69 @@ interface Address {
   country: string;
 }
 
-export default function AddressList({ addresses }: { addresses: Address[] }) {
+export default function AddressList() {
   const { toast } = useToast()
   const router = useRouter()
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const result = await getAddresses()
+        if (result.success) {
+          setAddresses(result.data || [])
+        } else {
+          toast({
+            title: "Error",
+            description: result.message || 'Failed to load addresses',
+            variant: 'destructive',
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching addresses:', error)
+        toast({
+          title: "Error",
+          description: 'Failed to load addresses',
+          variant: 'destructive',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAddresses()
+  }, [toast])
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteAddress(id)
-      toast({
-        title: "Success",
-        description: 'Address deleted successfully',
-      })
-      router.refresh()
-    } catch {
+      const result = await deleteAddress(id)
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: 'Address deleted successfully',
+        })
+        // Update the addresses list without a full page refresh
+        setAddresses(addresses.filter(address => address._id !== id))
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || 'Failed to delete address',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Error deleting address:', error)
       toast({
         title: "Error",
         variant: 'destructive',
         description: 'Failed to delete address',
       })
     }
+  }
+
+  if (loading) {
+    return <div>Loading addresses...</div>
   }
 
   return (
@@ -70,7 +115,7 @@ export default function AddressList({ addresses }: { addresses: Address[] }) {
                     size="icon"
                     asChild
                   >
-                    <Link href={`/account/addresses/${address._id}/edit`}>
+                    <Link href={`/account/addresses/edit/${address._id}`}>
                       <PencilIcon className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -98,4 +143,3 @@ export default function AddressList({ addresses }: { addresses: Address[] }) {
     </div>
   )
 }
-

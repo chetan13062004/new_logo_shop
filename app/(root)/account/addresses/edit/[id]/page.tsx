@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { AddressForm } from '../../address-form'
-import { getAddressById } from '@/lib/actions/address.actions'
+import AddressForm from '../../address-form'
+import { getAddressById, updateAddress } from '@/lib/actions/address.actions'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from '@/hooks/use-toast'
 
 export default function EditAddressPage() {
   const params = useParams()
@@ -39,6 +40,34 @@ export default function EditAddressPage() {
     fetchAddress()
   }, [params.id, router])
 
+  const handleSubmit = async (data: any) => {
+    try {
+      const addressId = Array.isArray(params.id) ? params.id[0] : params.id
+      const result = await updateAddress({ id: addressId, ...data })
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Address updated successfully",
+        })
+        router.push('/account/addresses')
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update address",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error updating address:', error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -63,7 +92,7 @@ export default function EditAddressPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Edit Address</h1>
-      {address && <AddressForm address={address} />}
+      {address && <AddressForm address={address} onSubmit={handleSubmit} />}
     </div>
   )
 }

@@ -17,13 +17,10 @@ interface FormData {
   country: string
 }
 
-export default function AddressForm({
-  address,
-  onSubmit,
-}: {
-  address?: FormData
-  onSubmit: (data: FormData) => Promise<void>
-}) {
+export default function AddressForm({ address, onSubmit }: {
+    address?: FormData;
+    onSubmit: (data: FormData) => Promise<void>;
+  }) {
   const { toast } = useToast()
   const router = useRouter()
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
