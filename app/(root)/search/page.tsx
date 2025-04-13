@@ -33,11 +33,6 @@ const prices = [
 // Define the correct type for search params
 type SearchParamsType = Record<string, string | string[] | undefined>;
 
-// Fixed interface to match Next.js PageProps constraint
-type SearchPageProps = {
-  params: Promise<{ slug?: string[] }>;
-  searchParams: SearchParamsType;
-}
 // Define a proper type for the product data response
 interface ProductData {
   products: IProduct[];
@@ -47,10 +42,10 @@ interface ProductData {
   to: number;
 }
 
-export async function generateMetadata(
-  { params, searchParams }: { params: Promise<{ slug?: string[] }>, searchParams: SearchParamsType }
-): Promise<Metadata>  {
-  await params
+export async function generateMetadata(props: {
+  searchParams: SearchParamsType
+}): Promise<Metadata> {
+  const { searchParams } = props
   const q = (searchParams?.q as string) || 'all'
   const category = (searchParams?.category as string) || 'all'
   const tag = (searchParams?.tag as string) || 'all'
@@ -76,10 +71,10 @@ export async function generateMetadata(
   }
 }
 
-export default async function SearchPage(
-  { params, searchParams }: { params: Promise<{ slug?: string[] }>, searchParams: SearchParamsType }
-) {
-  await params 
+export default async function SearchPage(props: {
+  searchParams: SearchParamsType
+}) {
+  const { searchParams } = props
   const q = (searchParams?.q as string) || 'all'
   const category = (searchParams?.category as string) || 'all'
   const tag = (searchParams?.tag as string) || 'all'
