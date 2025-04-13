@@ -2,13 +2,23 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getAddresses } from '@/lib/actions/address.actions'
 import AddressList from './address-list'
+import { Suspense } from 'react'
+
 const PAGE_TITLE = 'Your Addresses'
 export const metadata: Metadata = {
   title: PAGE_TITLE,
 }
 
 export default async function AddressesPage() {
-  const addresses = await getAddresses()
+  let addresses = { success: false, data: [] };
+  
+  try {
+    const response = await getAddresses();
+    addresses = { success: response.success, data: response.data || [] };
+  } catch (error) {
+    console.error('Error fetching addresses:', error);
+    // Continue with empty addresses
+  }
   
   return (
     <div>
@@ -19,7 +29,9 @@ export default async function AddressesPage() {
       </div>
       <h1 className='h1-bold py-4'>{PAGE_TITLE}</h1>
       
-      <AddressList addresses={addresses.data || []} />
+      <Suspense fallback={<div>Loading addresses...</div>}>
+        <AddressList addresses={addresses.data || []} />
+      </Suspense>
       
       <div className="mt-6">
         <Link 

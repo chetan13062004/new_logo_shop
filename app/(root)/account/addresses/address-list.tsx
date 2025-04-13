@@ -31,8 +31,10 @@ export default function AddressList({ addresses: initialAddresses }: AddressList
   const [loading, setLoading] = useState(!initialAddresses)
 
   useEffect(() => {
-    // If addresses were provided as props, don't fetch them
-    if (initialAddresses) {
+    // If addresses were provided as props, use them directly
+    if (initialAddresses && initialAddresses.length > 0) {
+      setAddresses(initialAddresses);
+      setLoading(false);
       return;
     }
     
@@ -73,6 +75,7 @@ export default function AddressList({ addresses: initialAddresses }: AddressList
         })
         // Update the addresses list without a full page refresh
         setAddresses(addresses.filter(address => address._id !== id))
+        router.refresh(); // Refresh the page to update server components
       } else {
         toast({
           title: "Error",
