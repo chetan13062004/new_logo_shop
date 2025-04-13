@@ -29,8 +29,8 @@ export default function EditAddressPage() {
         } else {
           router.push('/account/addresses')
         }
-      } catch (error) {
-        console.error('Error fetching address:', error)
+      } catch (err) {
+        console.error('Error fetching address:', err)
         router.push('/account/addresses')
       } finally {
         setLoading(false)
@@ -58,8 +58,8 @@ export default function EditAddressPage() {
           variant: "destructive",
         })
       }
-    } catch (error) {
-      console.error('Error updating address:', error)
+    } catch (err) {
+      console.error('Error updating address:', err)
       toast({
         title: "Error",
         description: "An unexpected error occurred",
