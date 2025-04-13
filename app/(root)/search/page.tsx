@@ -15,31 +15,6 @@ import { getFilterUrl, toSlug } from '@/lib/utils'
 import Rating from '@/components/shared/product/rating'
 import CollapsibleOnMobile from '@/components/shared/collapsible-on-mobile'
 
-// Define the correct type for searchParams
-interface SearchParams {
-  q?: string
-  category?: string
-  tag?: string
-  price?: string
-  rating?: string
-  sort?: string
-  page?: string
-}
-
-// Define the correct props type expected by Next.js app router
-interface PageProps {
-  searchParams: SearchParams
-}
-
-// Define the product data response interface
-interface ProductData {
-  products: IProduct[]
-  totalProducts: number
-  totalPages: number
-  from: number
-  to: number
-}
-
 const sortOrders = [
   { value: 'price-low-to-high', name: 'Price: Low to high' },
   { value: 'price-high-to-low', name: 'Price: High to low' },
@@ -55,14 +30,32 @@ const prices = [
   { name: 'Above Rs 3,000', value: '3001-1000000' },
 ]
 
+// Define the correct type for search params
+type SearchParamsType = Record<string, string | string[] | undefined>;
+
+// Fixed interface to match Next.js PageProps constraint
+type SearchPageProps = {
+  params: Promise<{ slug?: string[] }>;
+  searchParams: SearchParamsType;
+}
+// Define a proper type for the product data response
+interface ProductData {
+  products: IProduct[];
+  totalProducts: number;
+  totalPages: number;
+  from: number;
+  to: number;
+}
+
 export async function generateMetadata(
-  { searchParams }: PageProps
-): Promise<Metadata> {
-  const q = searchParams.q || 'all'
-  const category = searchParams.category || 'all'
-  const tag = searchParams.tag || 'all'
-  const price = searchParams.price || 'all'
-  const rating = searchParams.rating || 'all'
+  { params, searchParams }: { params: Promise<{ slug?: string[] }>, searchParams: SearchParamsType }
+): Promise<Metadata>  {
+  await params
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
 
   if (
     (q !== 'all' && q !== '') ||
@@ -72,29 +65,32 @@ export async function generateMetadata(
     price !== 'all'
   ) {
     return {
-      title: `Search Results${q !== 'all' ? ' for "' + q + '"' : ''}${
-        category !== 'all' ? ` : Category ${category}` : ''
-      }${tag !== 'all' ? ` : Tag ${tag}` : ''}${
-        price !== 'all' ? ` : Price ${price}` : ''
-      }${rating !== 'all' ? ` : Rating ${rating}` : ''}`,
+      title: `Search Results${q !== 'all' ? ' for "' + q + '"' : ''}
+        ${category !== 'all' ? ` : Category ${category}` : ''}
+        ${tag !== 'all' ? ` : Tag ${tag}` : ''}
+        ${price !== 'all' ? ` : Price ${price}` : ''}
+        ${rating !== 'all' ? ` : Rating ${rating}` : ''}`,
     }
   } else {
     return { title: 'Search Products' }
   }
 }
 
-export default async function SearchPage({ searchParams }: PageProps) {
-  const q = searchParams.q || 'all'
-  const category = searchParams.category || 'all'
-  const tag = searchParams.tag || 'all'
-  const price = searchParams.price || 'all'
-  const rating = searchParams.rating || 'all'
-  const sort = searchParams.sort || 'best-selling'
-  const page = searchParams.page || '1'
+export default async function SearchPage(
+  { params, searchParams }: { params: Promise<{ slug?: string[] }>, searchParams: SearchParamsType }
+) {
+  await params 
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
+  const sort = (searchParams?.sort as string) || 'best-selling'
+  const page = (searchParams?.page as string) || '1'
 
   const filterParams = { q, category, tag, price, rating, sort, page }
 
-  const [categories, tags, data] = (await Promise.all([
+  const [categories, tags, data] = await Promise.all([
     getAllCategories(),
     getAllTags(),
     getAllProducts({
@@ -106,7 +102,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       page: Number(page),
       sort,
     }),
-  ])) as [string[], string[], ProductData]
+  ]) as [string[], string[], ProductData]
 
   return (
     <div className='px-4 py-6 md:px-6 lg:px-12'>
@@ -155,22 +151,16 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <ul className='space-y-1'>
                 <li>
                   <Link
-                    className={`${
-                      'all' === category || '' === category
-                        ? 'text-primary font-semibold'
-                        : ''
-                    }`}
+                    className={`${('all' === category || '' === category) && 'text-primary font-semibold'}`}
                     href={getFilterUrl({ category: 'all', params: filterParams })}
                   >
                     All
                   </Link>
                 </li>
-                {categories.map((c) => (
+                {categories.map((c: string) => (
                   <li key={c}>
                     <Link
-                      className={`${
-                        c === category ? 'text-primary font-semibold' : ''
-                      }`}
+                      className={`${c === category && 'text-primary font-semibold'}`}
                       href={getFilterUrl({ category: c, params: filterParams })}
                     >
                       {c}
@@ -186,9 +176,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <ul className='space-y-1'>
                 <li>
                   <Link
-                    className={`${
-                      'all' === price ? 'text-primary font-semibold' : ''
-                    }`}
+                    className={`${'all' === price && 'text-primary font-semibold'}`}
                     href={getFilterUrl({ price: 'all', params: filterParams })}
                   >
                     All
@@ -198,9 +186,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                   <li key={p.value}>
                     <Link
                       href={getFilterUrl({ price: p.value, params: filterParams })}
-                      className={`${
-                        p.value === price ? 'text-primary font-semibold' : ''
-                      }`}
+                      className={`${p.value === price && 'text-primary font-semibold'}`}
                     >
                       {p.name}
                     </Link>
@@ -216,9 +202,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 <li>
                   <Link
                     href={getFilterUrl({ rating: 'all', params: filterParams })}
-                    className={`${
-                      'all' === rating ? 'text-primary font-semibold' : ''
-                    }`}
+                    className={`${'all' === rating && 'text-primary font-semibold'}`}
                   >
                     All
                   </Link>
@@ -226,9 +210,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 <li>
                   <Link
                     href={getFilterUrl({ rating: '4', params: filterParams })}
-                    className={`${
-                      '4' === rating ? 'text-primary font-semibold' : ''
-                    }`}
+                    className={`${'4' === rating && 'text-primary font-semibold'}`}
                   >
                     <div className='flex items-center gap-1'>
                       <Rating size={4} rating={4} />
@@ -245,22 +227,16 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <ul className='space-y-1'>
                 <li>
                   <Link
-                    className={`${
-                      'all' === tag || '' === tag
-                        ? 'text-primary font-semibold'
-                        : ''
-                    }`}
+                    className={`${('all' === tag || '' === tag) && 'text-primary font-semibold'}`}
                     href={getFilterUrl({ tag: 'all', params: filterParams })}
                   >
                     All
                   </Link>
                 </li>
-                {tags.map((t) => (
+                {tags.map((t: string) => (
                   <li key={t}>
                     <Link
-                      className={`${
-                        toSlug(t) === tag ? 'text-primary font-semibold' : ''
-                      }`}
+                      className={`${toSlug(t) === tag && 'text-primary font-semibold'}`}
                       href={getFilterUrl({ tag: t, params: filterParams })}
                     >
                       {t}
@@ -276,16 +252,14 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <div className='md:col-span-4 space-y-6'>
           <div>
             <h2 className='text-2xl font-semibold'>Results</h2>
-            <p className='text-muted-foreground'>
-              Check each product page for other buying options.
-            </p>
+            <p className='text-muted-foreground'>Check each product page for other buying options.</p>
           </div>
 
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
             {data.products.length === 0 && (
               <div className='col-span-full text-center'>No product found</div>
             )}
-            {data.products.map((product) => (
+            {data.products.map((product: IProduct) => (
               <ProductCard key={product._id} product={product} />
             ))}
           </div>
