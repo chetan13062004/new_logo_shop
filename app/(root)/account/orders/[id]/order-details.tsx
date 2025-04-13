@@ -48,7 +48,8 @@ interface Order {
   isDelivered: boolean;
   deliveredAt?: string;
   expectedDeliveryDate: string;
-  createdAt: string;
+  // Using underscore prefix to indicate intentionally unused property
+  _createdAt: string;
 }
 
 export default function OrderDetails() {
@@ -57,15 +58,11 @@ export default function OrderDetails() {
   const router = useRouter()
   const { data: session } = useSession()
   
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const user = session?.user
+  // Removed unused user variable
   
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDelivering, setIsDelivering] = useState(false)
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const createdAt = order?.createdAt
   
   const isAdmin = session?.user?.role === 'admin'
   const isDelivered = order?.isDelivered
@@ -84,8 +81,7 @@ export default function OrderDetails() {
           })
           router.push('/account/orders')
         }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+      } catch (_error) {
         toast({
           description: 'Failed to fetch order details',
           variant: 'destructive',
@@ -120,8 +116,7 @@ export default function OrderDetails() {
           variant: 'destructive',
         })
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
+    } catch (_err) {
       toast({
         description: 'Failed to deliver order',
         variant: 'destructive',
