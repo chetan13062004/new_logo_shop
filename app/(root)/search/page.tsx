@@ -30,14 +30,14 @@ const prices = [
   { name: 'Above Rs 3,000', value: '3001-1000000' },
 ]
 
-
+// Define the correct type for search params
 type SearchParamsType = { [key: string]: string | string[] | undefined };
 
+// Updated interface to match Next.js PageProps constraint
 interface SearchPageProps {
-  params: { [key: string]: string | string[] };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: { slug?: string[] };
+  searchParams: SearchParamsType;
 }
-
 
 // Define a proper type for the product data response
 interface ProductData {
