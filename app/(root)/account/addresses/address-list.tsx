@@ -20,13 +20,22 @@ interface Address {
   country: string;
 }
 
-export default function AddressList() {
+interface AddressListProps {
+  addresses?: Address[];
+}
+
+export default function AddressList({ addresses: initialAddresses }: AddressListProps) {
   const { toast } = useToast()
   const router = useRouter()
-  const [addresses, setAddresses] = useState<Address[]>([])
-  const [loading, setLoading] = useState(true)
+  const [addresses, setAddresses] = useState<Address[]>(initialAddresses || [])
+  const [loading, setLoading] = useState(!initialAddresses)
 
   useEffect(() => {
+    // If addresses were provided as props, don't fetch them
+    if (initialAddresses) {
+      return;
+    }
+    
     const fetchAddresses = async () => {
       try {
         const result = await getAddresses()
@@ -52,7 +61,7 @@ export default function AddressList() {
     }
 
     fetchAddresses()
-  }, [toast])
+  }, [toast, initialAddresses])
 
   const handleDelete = async (id: string) => {
     try {

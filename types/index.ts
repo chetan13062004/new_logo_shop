@@ -51,6 +51,18 @@ export type IOrderList = IOrderInput & {
 }
 
 
+// Add this to your types file
+export interface Address {
+  id: string;
+  name: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  // Add any other fields your addresses have
+}
+
 
 export type OrderItem = z.infer<typeof OrderItemSchema>
 export type Cart = z.infer<typeof CartSchema>
