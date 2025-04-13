@@ -81,7 +81,8 @@ export default function OrderDetails() {
           })
           router.push('/account/orders')
         }
-      } catch (_error) {
+      } catch (error) {
+        console.error('Error fetching order:', error)
         toast({
           description: 'Failed to fetch order details',
           variant: 'destructive',
@@ -95,7 +96,7 @@ export default function OrderDetails() {
     if (id) {
       fetchOrder()
     }
-  }, [id, router, toast])
+  }, [id, toast, router])
 
   const handleDeliverOrder = async () => {
     setIsDelivering(true)
@@ -116,7 +117,8 @@ export default function OrderDetails() {
           variant: 'destructive',
         })
       }
-    } catch (_err) {
+    } catch (error) {
+      console.error('Error delivering order:', error)
       toast({
         description: 'Failed to deliver order',
         variant: 'destructive',
@@ -128,16 +130,65 @@ export default function OrderDetails() {
 
   if (isLoading) {
     return (
-      <div className='container py-10'>
-        <Skeleton className='h-8 w-64 mb-6' />
-        <div className='grid md:grid-cols-3 gap-6'>
-          <div className='md:col-span-2 space-y-6'>
-            <Skeleton className='h-64 w-full' />
-            <Skeleton className='h-64 w-full' />
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-between">
+                      <Skeleton className="h-16 w-16" />
+                      <div className="flex-1 ml-4">
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div>
-            <Skeleton className='h-64 w-full' />
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-6 w-32 mb-4" />
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -145,174 +196,138 @@ export default function OrderDetails() {
 
   if (!order) {
     return (
-      <div className='container py-10'>
-        <p>Order not found</p>
+      <div className="text-center py-10">
+        <h2 className="text-xl">Order not found</h2>
+        <Link href="/account/orders" className="text-primary hover:underline">
+          Back to orders
+        </Link>
       </div>
     )
   }
 
   return (
-    <div className='container py-10'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold'>Order Details</h1>
-        <Button variant='outline' asChild>
-          <Link href='/account/orders'>Back to Orders</Link>
-        </Button>
-      </div>
+    <div className="grid md:grid-cols-3 md:gap-5">
+      <div className="overflow-x-auto md:col-span-2 space-y-4">
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+            <p>
+              {order.shippingAddress.fullName} {order.shippingAddress.phone}
+            </p>
+            <p>
+              {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
+              {order.shippingAddress.province}, {order.shippingAddress.postalCode},{' '}
+              {order.shippingAddress.country}{' '}
+            </p>
+            <div className="mt-4">
+              {order.isDelivered ? (
+                <div className="bg-green-100 p-2 rounded-md text-green-700">
+                  Delivered at {formatDateTime(new Date(order.deliveredAt!)).dateTime}
+                </div>
+              ) : (
+                <div>
+                  <div className="bg-red-100 p-2 rounded-md text-red-700">
+                    Not delivered
+                  </div>
+                  <div className="mt-2">
+                    Expected delivery at{' '}
+                    {formatDateTime(new Date(order.expectedDeliveryDate)).dateTime}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className='grid md:grid-cols-3 gap-6'>
-        <div className='md:col-span-2 space-y-6'>
-          <Card>
-            <CardContent className='p-6'>
-              <h2 className='text-xl font-bold mb-4'>Shipping</h2>
-              <div className='space-y-2'>
-                <p>
-                  <span className='font-semibold'>Name:</span>{' '}
-                  {order.shippingAddress.fullName}
-                </p>
-                <p>
-                  <span className='font-semibold'>Address:</span>{' '}
-                  {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
-                  {order.shippingAddress.province},{' '}
-                  {order.shippingAddress.postalCode},{' '}
-                  {order.shippingAddress.country}
-                </p>
-                <p>
-                  <span className='font-semibold'>Phone:</span>{' '}
-                  {order.shippingAddress.phone}
-                </p>
-                <p>
-                  <span className='font-semibold'>Status:</span>{' '}
-                  {order.isDelivered ? (
-                    <span className='text-green-600'>
-                      Delivered on{' '}
-                      {formatDateTime(new Date(order.deliveredAt!)).dateTime}
-                    </span>
-                  ) : (
-                    <span className='text-red-600'>Not Delivered</span>
-                  )}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+            <p>{order.paymentMethod}</p>
+            <div className="mt-4">
+              {order.isPaid ? (
+                <div className="bg-green-100 p-2 rounded-md text-green-700">
+                  Paid at {formatDateTime(new Date(order.paidAt!)).dateTime}
+                </div>
+              ) : (
+                <div className="bg-red-100 p-2 rounded-md text-red-700">
+                  Not paid
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className='p-6'>
-              <h2 className='text-xl font-bold mb-4'>Payment</h2>
-              <div className='space-y-2'>
-                <p>
-                  <span className='font-semibold'>Method:</span>{' '}
-                  {order.paymentMethod}
-                </p>
-                <p>
-                  <span className='font-semibold'>Status:</span>{' '}
-                  {order.isPaid ? (
-                    <span className='text-green-600'>
-                      Paid on {formatDateTime(new Date(order.paidAt!)).dateTime}
-                    </span>
-                  ) : (
-                    <span className='text-red-600'>Not Paid</span>
-                  )}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className='p-6'>
-              <h2 className='text-xl font-bold mb-4'>Order Items</h2>
-              <div className='space-y-4'>
-                {order.orderItems.map((item: OrderItem, index: number) => (
-                  <div
-                    key={index}
-                    className='flex items-center gap-4 border-b last:border-b-0 pb-4 last:pb-0'
-                  >
-                    <div className='relative w-20 h-20'>
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        sizes='80px'
-                        style={{ objectFit: 'contain' }}
-                      />
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Order Items</h2>
+            <div className="divide-y">
+              {order.orderItems.map((item) => (
+                <div key={`${item.slug}-${item.color}-${item.size}`} className="py-4 flex">
+                  <div className="flex-shrink-0 mr-4">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      width={80}
+                      height={80}
+                      className="rounded-md object-cover"
+                    />
+                  </div>
+                  <div className="flex-grow">
+                    <Link
+                      href={`/product/${item.slug}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {item.name}
+                    </Link>
+                    <div className="text-sm text-gray-500">
+                      {item.color} / {item.size}
                     </div>
-                    <div className='flex-1'>
-                      <Link
-                        href={`/product/${item.slug}`}
-                        className='font-semibold hover:text-primary'
-                      >
-                        {item.name}
-                      </Link>
-                      <p className='text-sm text-muted-foreground'>
-                        {item.color}, {item.size}
-                      </p>
-                    </div>
-                    <div className='text-right'>
-                      <p className='font-semibold'>
-                        {formatPrice(item.price)} x {item.quantity} ={' '}
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                    <div className="mt-1">
+                      {item.quantity} × {formatPrice(item.price)} ={' '}
+                      {formatPrice(item.price * item.quantity)}
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          {isAdmin && !isDelivered && (
-            <div className='mt-4'>
-              <Button 
-                onClick={handleDeliverOrder} 
+      <div>
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Items:</span>
+                <span>{formatPrice(order.itemsPrice)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Shipping:</span>
+                <span>{formatPrice(order.shippingPrice)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax:</span>
+                <span>{formatPrice(order.taxPrice)}</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span>{formatPrice(order.totalPrice)}</span>
+              </div>
+            </div>
+
+            {isAdmin && !order.isDelivered && (
+              <Button
+                className="w-full mt-4"
+                onClick={handleDeliverOrder}
                 disabled={isDelivering}
-                className='w-full'
               >
                 {isDelivering ? 'Processing...' : 'Mark as Delivered'}
               </Button>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Card>
-            <CardContent className='p-6'>
-              <h2 className='text-xl font-bold mb-4'>Order Summary</h2>
-              <div className='space-y-2'>
-                <div className='flex justify-between'>
-                  <span>Items:</span>
-                  <span>{formatPrice(order.itemsPrice)}</span>
-                </div>
-                <div className='flex justify-between'>
-                  <span>Shipping:</span>
-                  <span>
-                    {order.shippingPrice === 0
-                      ? 'Free'
-                      : formatPrice(order.shippingPrice)}
-                  </span>
-                </div>
-                <div className='flex justify-between'>
-                  <span>Tax:</span>
-                  <span>{formatPrice(order.taxPrice)}</span>
-                </div>
-                <div className='flex justify-between font-bold text-lg pt-2 border-t'>
-                  <span>Total:</span>
-                  <span>{formatPrice(order.totalPrice)}</span>
-                </div>
-              </div>
-
-              <div className='mt-6 space-y-2'>
-                <h3 className='font-semibold'>Expected Delivery</h3>
-                <p className='text-green-600 font-medium'>
-                  {formatDateTime(new Date(order.expectedDeliveryDate)).dateOnly}
-                </p>
-              </div>
-
-              <div className='mt-6 space-y-2'>
-                <h3 className='font-semibold'>Order ID</h3>
-                <p className='text-sm break-all'>{order._id}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -2,38 +2,40 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/providers/theme-provider'
-import { Toaster } from '@/components/ui/toaster'
-import NextAuthSessionProvider from '@/components/providers/session-provider'
-import { auth } from '@/auth'
+import ClientProviders from '@/components/shared/client-providers'
+import { APP_DESCRIPTION, APP_NAME} from '@/lib/constants'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Shoe Store',
-  description: 'Your one-stop shop for all types of shoes',
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
+export default function RootLayout({ 
+  children 
+}: { 
+  children: React.ReactNode 
 }) {
-  const session = await auth()
-  
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
-        <NextAuthSessionProvider session={session as any}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+    <html lang='en' suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='system'
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ClientProviders>
             {children}
-            <Toaster />
-          </ThemeProvider>
-        </NextAuthSessionProvider>
+          </ClientProviders>
+        </ThemeProvider>
       </body>
     </html>
   )

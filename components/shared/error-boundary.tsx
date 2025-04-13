@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 export default function ErrorBoundary({
   error,
@@ -10,7 +10,8 @@ export default function ErrorBoundary({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const [errorMessage, setErrorMessage] = useState<string>(error.message || 'An error occurred')
+  // Using the error message directly without state
+  const errorMessage = error.message || 'An error occurred'
   
   useEffect(() => {
     // Log the error to an error reporting service

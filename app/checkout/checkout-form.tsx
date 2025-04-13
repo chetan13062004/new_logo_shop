@@ -38,12 +38,11 @@ import Link from 'next/link'
 import useCartStore from '@/hooks/use-cart-store'
 import { APP_NAME, AVAILABLE_DELIVERY_DATES, AVAILABLE_PAYMENT_METHOD, DEFAULT_PAYMENT_METHOD } from '@/lib/constants'
 import { createOrder } from '@/lib/actions/order.actions'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
+// Removed unused imports
 
-// Define the props interface for CheckoutForm
+// Define the props interface for CheckoutForm with proper typing
 interface CheckoutFormProps {
-  userAddresses: any[]; // You can replace 'any' with a more specific type if available
+  userAddresses: ShippingAddress[];
 }
 
 // Utility function for price formatting
@@ -176,7 +175,8 @@ const CheckoutForm = ({ userAddresses }: CheckoutFormProps) => {
           router.push('/checkout')
         }
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Checkout error:', error);
       toast({
         description: 'An error occurred while placing your order.',
         variant: 'destructive',
@@ -563,8 +563,8 @@ const CheckoutForm = ({ userAddresses }: CheckoutFormProps) => {
                     }
                   </p>
                   <ul>
-                    {items.map((item, _index) => (
-                      <li key={_index}>
+                    {items.map((item, index) => (
+                      <li key={index}>
                         {item.name} x {item.quantity} = {formatPrice(item.price)}
                       </li>
                     ))}
@@ -609,8 +609,8 @@ const CheckoutForm = ({ userAddresses }: CheckoutFormProps) => {
                     )}
                     <div className='grid md:grid-cols-2 gap-6'>
                       <div>
-                        {items.map((item, _index) => (
-                          <div key={_index} className='flex gap-4 py-2'>
+                        {items.map((item, index) => (
+                          <div key={index} className='flex gap-4 py-2'>
                             <div className='relative w-16 h-16'>
                               <Image
                                 src={item.image}
