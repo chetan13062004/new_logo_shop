@@ -43,9 +43,9 @@ interface ProductData {
 }
 
 export async function generateMetadata(props: {
-  searchParams: SearchParamsType
+  searchParams: Promise<SearchParamsType>
 }): Promise<Metadata> {
-  const { searchParams } = props
+  const searchParams = await props.searchParams
   const q = (searchParams?.q as string) || 'all'
   const category = (searchParams?.category as string) || 'all'
   const tag = (searchParams?.tag as string) || 'all'
@@ -72,9 +72,9 @@ export async function generateMetadata(props: {
 }
 
 export default async function SearchPage(props: {
-  searchParams: SearchParamsType
+  searchParams: Promise<SearchParamsType>
 }) {
-  const { searchParams } = props
+  const searchParams = await props.searchParams
   const q = (searchParams?.q as string) || 'all'
   const category = (searchParams?.category as string) || 'all'
   const tag = (searchParams?.tag as string) || 'all'
