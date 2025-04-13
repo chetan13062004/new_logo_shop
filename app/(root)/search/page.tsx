@@ -31,10 +31,10 @@ const prices = [
 ]
 
 // Define the correct type for search params
-type SearchParamsType = { [key: string]: string | string[] | undefined };
+type SearchParamsType = Record<string, string | string[] | undefined>;
 
-// Updated interface to match Next.js PageProps constraint
-interface SearchPageProps {
+// Fixed interface to match Next.js PageProps constraint
+type SearchPageProps = {
   params: { slug?: string[] };
   searchParams: SearchParamsType;
 }
@@ -51,12 +51,11 @@ interface ProductData {
 export async function generateMetadata(
   { searchParams }: SearchPageProps
 ): Promise<Metadata> {
-  const searchParamsData = await Promise.resolve(searchParams)
-  const q = (searchParamsData?.q as string) || 'all'
-  const category = (searchParamsData?.category as string) || 'all'
-  const tag = (searchParamsData?.tag as string) || 'all'
-  const price = (searchParamsData?.price as string) || 'all'
-  const rating = (searchParamsData?.rating as string) || 'all'
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
 
   if (
     (q !== 'all' && q !== '') ||
@@ -80,14 +79,13 @@ export async function generateMetadata(
 export default async function SearchPage(
   { searchParams }: SearchPageProps
 ) {
-  const searchParamsData = await Promise.resolve(searchParams)
-  const q = (searchParamsData?.q as string) || 'all'
-  const category = (searchParamsData?.category as string) || 'all'
-  const tag = (searchParamsData?.tag as string) || 'all'
-  const price = (searchParamsData?.price as string) || 'all'
-  const rating = (searchParamsData?.rating as string) || 'all'
-  const sort = (searchParamsData?.sort as string) || 'best-selling'
-  const page = (searchParamsData?.page as string) || '1'
+  const q = (searchParams?.q as string) || 'all'
+  const category = (searchParams?.category as string) || 'all'
+  const tag = (searchParams?.tag as string) || 'all'
+  const price = (searchParams?.price as string) || 'all'
+  const rating = (searchParams?.rating as string) || 'all'
+  const sort = (searchParams?.sort as string) || 'best-selling'
+  const page = (searchParams?.page as string) || '1'
 
   const filterParams = { q, category, tag, price, rating, sort, page }
 
